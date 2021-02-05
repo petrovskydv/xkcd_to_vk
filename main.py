@@ -19,27 +19,33 @@ def main():
     vk_access_token = os.getenv('VK_ACCESS_TOKEN')
     vk_group_id = os.getenv('VK_GROUP_ID')
     group_owner_id = -int(vk_group_id)
-
+    vk_api_version = 5.126
+    start_number = 0
+    file_name = 'image'
     source_path = 'images'
     os.makedirs(source_path, exist_ok=True)
 
     urllib3.disable_warnings()
 
-    image_url, image_title = fetch_comics_url(fetch_random_image())
-    utils.download_image('image', image_url, source_path)
+    image_url, image_title = fetch_comics_url(fetch_random_image(start_number))
+    file_path = utils.download_image(file_name, image_url, source_path)
 
     params = {
         'access_token': vk_access_token,
-        'v': 5.126,
+        'v': vk_api_version,
     }
 
     upload_result = upload_image_to_vk_server(
-        'images/image.png', fetch_server_address_to_upload_image(params, vk_group_id))
+        file_path, fetch_server_address_to_upload_image(params, vk_group_id))
+
     post_image_on_wall(
         group_owner_id,
         save_image_to_album(upload_result, vk_group_id, params),
         params,
         image_title)
+
+    logger.info('удаляем файл')
+    os.remove(file_path)
 
 
 def fetch_comics_url(image_number):
@@ -53,6 +59,7 @@ def fetch_comics_url(image_number):
 
 def post_image_on_wall(owner_id_group, save_wall_photo_result, params, image_title):
     logger.info('размещаем фото на стене')
+
     params['owner_id'] = owner_id_group
     params['attachments'] = f'photo{save_wall_photo_result["owner_id"]}_{save_wall_photo_result["id"]}]'
     params['message'] = image_title
@@ -64,6 +71,7 @@ def post_image_on_wall(owner_id_group, save_wall_photo_result, params, image_tit
 
 def save_image_to_album(upload_result, vk_group_id, params):
     logger.info('сохраняем файл в альбоме')
+
     params['server'] = upload_result['server']
     params['photo'] = upload_result['photo']
     params['hash'] = upload_result['hash']
@@ -80,7 +88,7 @@ def upload_image_to_vk_server(file_path, upload_url):
     logger.info('выгружаем файл на upload_url')
     with open(file_path, 'rb') as file:
         files = {
-            'photo': file,  # media — это имя поля данных, как указано в доке к API
+            'photo': file,
         }
         response = requests.post(upload_url, files=files)
         response.raise_for_status()
@@ -99,13 +107,13 @@ def fetch_server_address_to_upload_image(params, vk_group_id):
     return review_result['response']['upload_url']
 
 
-def fetch_random_image():
+def fetch_random_image(start_number):
     logger.info('получаем случайный комикс')
     response = requests.get('https://xkcd.com/info.0.json')
     response.raise_for_status()
     review_result = response.json()
     logger.debug(review_result)
-    return random.randint(0, review_result['num'])
+    return random.randint(start_number, review_result['num'])
 
 
 if __name__ == '__main__':

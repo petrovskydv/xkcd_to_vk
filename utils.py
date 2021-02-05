@@ -15,3 +15,4 @@ def download_image(file_name, url, source_path):
     with open(file_path, 'wb') as file:
         file.write(response.content)
     logger.info(f'download file: {file_path}')
+    return file_path
