@@ -34,14 +34,20 @@ def main():
         'v': vk_api_version,
     }
 
-    upload_result = upload_image_to_vk_server(
-        file_path, fetch_server_address_to_upload_image(params, vk_group_id))
+    try:
+        upload_result = upload_image_to_vk_server(
+            file_path, fetch_server_address_to_upload_image(params, vk_group_id))
 
-    post_image_on_wall(
-        group_owner_id,
-        save_image_to_album(upload_result, vk_group_id, params),
-        params,
-        image_title)
+        post_image_on_wall(
+            group_owner_id,
+            save_image_to_album(upload_result, vk_group_id, params),
+            params,
+            image_title)
+    except utils.VkException as e:
+        print(f'Публикация завершилась ошибкой: {e}')
+    finally:
+        logger.info('удаляем файл')
+        os.remove(file_path)
 
     logger.info('удаляем файл')
     os.remove(file_path)
