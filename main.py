@@ -24,27 +24,30 @@ def main():
     source_path = 'images'
     os.makedirs(source_path, exist_ok=True)
 
-    urllib3.disable_warnings()
-
-    image_url, image_title = fetch_comics_url(fetch_random_image(start_number))
-    file_path = utils.download_image(file_name, image_url, source_path)
-
     params = {
         'access_token': vk_access_token,
         'v': vk_api_version,
     }
 
-    upload_result = upload_image_to_vk_server(
-        file_path, fetch_server_address_to_upload_image(params, vk_group_id))
+    urllib3.disable_warnings()
 
-    post_image_on_wall(
-        group_owner_id,
-        save_image_to_album(upload_result, vk_group_id, params),
-        params,
-        image_title)
+    image_url, image_title = fetch_comics_url(fetch_random_image(start_number))
+    file_path = utils.download_image(file_name, image_url, source_path)
 
-    logger.info('удаляем файл')
-    os.remove(file_path)
+    try:
+        upload_result = upload_image_to_vk_server(
+            file_path, fetch_server_address_to_upload_image({**params}, vk_group_id))
+
+        post_image_on_wall(
+            group_owner_id,
+            save_image_to_album(upload_result, vk_group_id, {**params}),
+            {**params},
+            image_title)
+    except utils.VkException as e:
+        print(f'Публикация завершилась ошибкой: {e}')
+    finally:
+        logger.info('удаляем файл')
+        os.remove(file_path)
 
 
 def fetch_comics_url(image_number):
@@ -66,6 +69,7 @@ def post_image_on_wall(owner_id_group, save_wall_photo_result, params, image_tit
     response = requests.post('https://api.vk.com/method/wall.post', params=params)
     response.raise_for_status()
     logger.debug(response.json())
+    raise_for_vk_error(response.json())
 
 
 def save_image_to_album(upload_result, vk_group_id, params):
@@ -80,6 +84,7 @@ def save_image_to_album(upload_result, vk_group_id, params):
     response.raise_for_status()
     review_result = response.json()
     logger.debug(review_result)
+    raise_for_vk_error(review_result)
     return review_result['response'][0]
 
 
@@ -93,6 +98,7 @@ def upload_image_to_vk_server(file_path, upload_url):
         response.raise_for_status()
         review_result = response.json()
         logger.debug(review_result)
+        raise_for_vk_error(review_result)
     return review_result
 
 
@@ -103,7 +109,14 @@ def fetch_server_address_to_upload_image(params, vk_group_id):
     response.raise_for_status()
     review_result = response.json()
     logger.debug(review_result)
+    raise_for_vk_error(review_result)
     return review_result['response']['upload_url']
+
+
+def raise_for_vk_error(review_result):
+    if 'error' in review_result:
+        logger.info(f'Error {review_result["error"]["error_msg"]}')
+        raise utils.VkException(review_result)
 
 
 def fetch_random_image(start_number):
