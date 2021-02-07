@@ -36,27 +36,18 @@ def main():
 
     try:
         upload_result = upload_image_to_vk_server(
-            file_path, fetch_server_address_to_upload_image(params, vk_group_id))
+            file_path, fetch_server_address_to_upload_image({**params}, vk_group_id))
 
         post_image_on_wall(
             group_owner_id,
-            save_image_to_album(upload_result, vk_group_id, params),
-            params,
+            save_image_to_album(upload_result, vk_group_id, {**params}),
+            {**params},
             image_title)
     except utils.VkException as e:
         print(f'Публикация завершилась ошибкой: {e}')
     finally:
         logger.info('удаляем файл')
         os.remove(file_path)
-
-
-def fetch_comic_book_url_and_description(image_number):
-    logger.info('получаем ссылку на файл')
-    response = requests.get(f'https://xkcd.com/{image_number}/info.0.json')
-    response.raise_for_status()
-    review_result = response.json()
-    logger.debug(review_result)
-    return review_result['img'], review_result['alt']
 
 
 def post_image_on_wall(owner_id_group, save_wall_photo_result, params, image_title):
@@ -78,7 +69,7 @@ def save_image_to_album(upload_result, vk_group_id, params):
     params['server'] = upload_result['server']
     params['photo'] = upload_result['photo']
     params['hash'] = upload_result['hash']
-    params['group_id']: vk_group_id
+    params['group_id'] = vk_group_id
 
     response = requests.post('https://api.vk.com/method/photos.saveWallPhoto', params=params)
     response.raise_for_status()
@@ -120,6 +111,15 @@ def get_random_comic_book_number(start_number):
     review_result = response.json()
     logger.debug(review_result)
     return random.randint(start_number, review_result['num'])
+
+
+def fetch_comic_book_url_and_description(image_number):
+    logger.info('получаем ссылку на файл')
+    response = requests.get(f'https://xkcd.com/{image_number}/info.0.json')
+    response.raise_for_status()
+    review_result = response.json()
+    logger.debug(review_result)
+    return review_result['img'], review_result['alt']
 
 
 def raise_for_vk_error(review_result):
