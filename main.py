@@ -44,7 +44,7 @@ def main():
             {**params},
             image_title)
     except utils.VkException as e:
-        print(f'Публикация завершилась ошибкой: {e}')
+        print(f'Ошибка публикации: {e}')
     finally:
         logger.info('удаляем файл')
         os.remove(file_path)
