@@ -49,9 +49,6 @@ def main():
         logger.info('удаляем файл')
         os.remove(file_path)
 
-    logger.info('удаляем файл')
-    os.remove(file_path)
-
 
 def fetch_comic_book_url_and_description(image_number):
     logger.info('получаем ссылку на файл')
