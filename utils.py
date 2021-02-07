@@ -6,6 +6,15 @@ import requests
 logger = logging.getLogger(__name__)
 
 
+class VkException(Exception):
+    def __init__(self, review_result):
+        self.error_code = review_result['error']['error_code']
+        self.error_msg = review_result['error']['error_msg']
+
+    def __str__(self):
+        return repr(f'error_code: {self.error_code}, error_msg:{self.error_msg}')
+
+
 def download_image(file_name, url, source_path):
     response = requests.get(url, verify=False)
     response.raise_for_status()
