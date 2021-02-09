@@ -59,8 +59,9 @@ def post_image_on_wall(owner_id_group, save_wall_photo_result, params, image_tit
 
     response = requests.post('https://api.vk.com/method/wall.post', params=params)
     response.raise_for_status()
-    logger.debug(response.json())
-    raise_for_vk_error(response.json())
+    review_result = response.json()
+    logger.debug(review_result)
+    raise_for_vk_error(review_result)
 
 
 def save_image_to_album(upload_result, vk_group_id, params):
