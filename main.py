@@ -58,7 +58,6 @@ def post_image_on_wall(owner_id_group, save_wall_photo_result, params, image_tit
     params['message'] = image_title
 
     response = requests.post('https://api.vk.com/method/wall.post', params=params)
-    response.raise_for_status()
     review_result = response.json()
     logger.debug(review_result)
     raise_for_vk_error(review_result)
@@ -73,7 +72,6 @@ def save_image_to_album(upload_result, vk_group_id, params):
     params['group_id'] = vk_group_id
 
     response = requests.post('https://api.vk.com/method/photos.saveWallPhoto', params=params)
-    response.raise_for_status()
     review_result = response.json()
     logger.debug(review_result)
     raise_for_vk_error(review_result)
@@ -87,7 +85,6 @@ def upload_image_to_vk_server(file_path, upload_url):
             'photo': file,
         }
         response = requests.post(upload_url, files=files)
-        response.raise_for_status()
         review_result = response.json()
         logger.debug(review_result)
         raise_for_vk_error(review_result)
@@ -98,7 +95,6 @@ def fetch_server_address_to_upload_image(params, vk_group_id):
     logger.info('запрашиваем upload_url')
     params['group_id'] = vk_group_id
     response = requests.get('https://api.vk.com/method/photos.getWallUploadServer', params=params)
-    response.raise_for_status()
     review_result = response.json()
     logger.debug(review_result)
     raise_for_vk_error(review_result)
